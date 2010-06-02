@@ -151,10 +151,6 @@ class Matrixer(object):
         return (front, middle, back)
 
 class Candidater(object):
-    """
-    inpection will be Inspector.inspect()
-    matrix_list will be Matrixer.solve_matrix()
-    """
     def __init__(self, inspection, matrix_list, word):
         self.inspection = inspection
         self.matrix = matrix_list
