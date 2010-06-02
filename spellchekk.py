@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# This solves the problem located, at some point, here:
+# This solves the problem located, at some point in time, here:
 # http://www.justin.tv/problems/spellcheck
 
 
