@@ -25,16 +25,16 @@
 
 # If there are many possible corrections of an input word, your program can choose one in any way you like. It just has to be an English word that is a spelling correction of the input by the above rules.
 
-# Extra credit: Write a second program that *generates* words with spelling mistakes of the above form, starting with correctly spelled English words. Pipe its output into the first program and verify that there are no occurrences of "NO SUGGESTION" in the output.
-
 
 
 import readline
 import re
 import random
 
-
+# open a corpus of words for comparing with the spell checker.
 _words = open('/usr/share/dict/words', 'rb')
+
+
 def make_word_list():
     _l = {'lower': [],
           'normal': []}
@@ -42,20 +42,36 @@ def make_word_list():
         _l['lower'].append(word.lower().strip())
         _l['normal'].append(word.strip())
     return _l
+
+
 word_list = make_word_list()                  
 
+
 def check(_word):
+    """
+    Checks to see if a word is in the corpus of words; if it
+    is, return False, since there is no need to parse it as a
+    misspelling
+    """
+
     if _word.lower() in word_list['lower']:
         return word_list['normal'][word_list['lower'].index(_word.lower())]
     else: return False
 
+
 class Inspector(object):
+    """
+    Read a word and parse it before creating a list that represents the number
+    of times each uquique letter is repeated
+    """
+
     def __init__(self, _word):
         self.word = _word
         self.matrix_seed = []
         self.resultlist_dicts = []
 
     def unique_letters(self):
+        """return a list of all unique letters in a word"""
         _l = []
         for letter in self.word:
             if letter not in _l:
@@ -63,13 +79,21 @@ class Inspector(object):
         return _l
             
     def re_gt_2(self):
+        """return a list of compiled regular expression objects
+        for each letter that is repeated twice or more."""
+
         return [re.compile("%s{2,}" % x) for x in self.unique_letters()]
 
     def letters_gt_2(self):
+        """
+        returns a list of re.finditer objects for each letter unique letter
+        in self.word
+        """
         _list = self.re_gt_2()
         _l = []
         for x in _list:
             _l.append(re.finditer(x, self.word))
+        print("this is letters_gt_2: %s" % _l)
         return [list(i) for i in _l]    
 
     def _start(self, _list):
@@ -82,15 +106,28 @@ class Inspector(object):
         for i in _list:
             self._start(i)
         return None
+
     def inspect(self):
         self.showthis(self.letters_gt_2())
         self.sorted = sorted(self.resultlist_dicts, key=lambda x: x[x.keys()[0]], reverse=True)
+
         return self.sorted
+
     def seeder(self):
+        """
+        returns a list to seed the Matrixer class
+        """
         return [len(i.keys()[0]) for i in self.resultlist_dicts]
 
 
 class Matrixer(object):
+    """
+    accepts a list of the quantity of all repeated letters in order as they occur
+    in a word.
+    returns a matrix of all permutations of integers from 1 to n for each item in 
+    the list given; n being the integer in the list given.
+    """
+
     def __init__(self, input_list):
         self.matrix = []
         self.list = input_list
@@ -106,10 +143,15 @@ class Matrixer(object):
                     self.matrix.append(_new_list)
                     self._iterate(_new_list)
         return None
+
     def solve(self):
+
         self.matrix.append(self.list)
+
         self._iterate(self.list)
+
         return self.matrix
+
     def join_lists(self, _list, new_item, index):
         _l = []
         front, middle, back = self.partition_list(_list, index)
@@ -151,6 +193,12 @@ class Matrixer(object):
         return (front, middle, back)
 
 class Candidater(object):
+    """
+
+
+
+    """
+
     def __init__(self, inspection, matrix_list, word):
         self.inspection = inspection
         self.matrix = matrix_list
@@ -185,6 +233,11 @@ class Candidater(object):
 
 
 class Voweller(object):
+    """
+    
+    """
+
+
     def __init__(self, word_candidate):
         self.vowels = ('a', 'e', 'i', 'o', 'u')
         self.resultlist = []
@@ -223,16 +276,25 @@ class Voweller(object):
         return self.sorted
 
     def seeder(self):
+        """
+        returns a list of the integer 5 for each unique
+        """
+        print("This is self.resultlist in Voweller: %s" % self.resultlist)
         return [5 for i in self.resultlist]
-
+        
 
 class VowelCandidater(object):
     """
-    inpection will be Voweller.inspect()
-    matrix_list will be Matrixer.solve_matrix()
+    compares every permutation of vowel combination with each vowel 
+    in a word.
+
+    accepts a list of dictionaries that are the vowel and
+    the index in which it occurs, a 
     """
 
     def __init__(self, inspection, matrix_list, word):
+        print("this is the VowelCandidater inspection: %s" % inspection)
+        print("this is the VowelCandidater matrix_list: %s" % matrix_list)
         self.inspection = inspection
 
         self.matrix = matrix_list
@@ -249,7 +311,7 @@ class VowelCandidater(object):
             
             back = self.word_element[:item[0].values()[0]]
             caboose = caboose.replace(item[0].keys()[0][0], self.vowels[item[1]-1])
-                        
+            
             minor_candidate.append(caboose)
             self.word_element = back
         try:
@@ -274,36 +336,54 @@ def spell_checker(_word):
     inspection = I.inspect()
 
     matrix_seed = I.seeder()
-    
+    print matrix_seed
     M = Matrixer(matrix_seed)
     matrix = M.solve()
-
+    
     C = Candidater(inspection, matrix, _word)
     candidates = C.check_candidate()
-
-    for candidate in candidates:
+    
+    if matrix == [[]]:
         
-        V = Voweller(candidate)
+        V = Voweller(_word)
         vowel_inspection =  V.inspect()
         VM = Matrixer(V.seeder())
         vowel_matrix = VM.solve()
         
-        c = VowelCandidater(vowel_inspection, vowel_matrix, candidate)
+        c = VowelCandidater(vowel_inspection, vowel_matrix, _word)
         candidates = c.check_candidate()
+
         for word_candidate in candidates:
             if check(word_candidate) and check(word_candidate) not in actual_words:
                 actual_words.append(check(word_candidate))
-    return actual_words
+        return actual_words
+    
+    else:
+    
+        for candidate in candidates:
+
+            V = Voweller(candidate)
+            vowel_inspection =  V.inspect()
+            VM = Matrixer(V.seeder())
+            vowel_matrix = VM.solve()
+            
+            c = VowelCandidater(vowel_inspection, vowel_matrix, candidate)
+            candidates = c.check_candidate()
+            for word_candidate in candidates:
+                if check(word_candidate) and check(word_candidate) not in actual_words:
+                    actual_words.append(check(word_candidate))
+        return actual_words
 
 
 def select_random(_list):
-    selector = random.randint(0, len(_list))
+    selector = random.randint(0, len(_list) - 1)
     return _list[selector]
 
 def prompt():
     _input = raw_input('> ')
     if check(_input) == False:
         these_words = spell_checker(_input.lower())
+        print these_words
         if these_words == []:
             return 'NO SUGGESTION'
         
