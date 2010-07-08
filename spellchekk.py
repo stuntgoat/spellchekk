@@ -143,99 +143,54 @@ class Inspector(object):
 
 
 class Matrixer(object):
-    """
-    accepts a list of the quantity of all repeated letters in order as they occur
-    in a word.
-    returns a matrix of all permutations of integers from 1 to n for each item in 
-    the list given; n being the integer in the list given.
-    """
-
-    def __init__(self, input_list):
+    def __init__(self, initial_list):
+        
+        # print initial_list
+        self.list = initial_list
+        self.length = len(initial_list)
         self.matrix = []
-        self.list = input_list
 
-    def _iterate(self, _list):
+    def rangeit(self, num):
+        return [[x] for x in range(1, num + 1)]
+    
+    def add_lists(self, one, two):
         """
-        iterates over a list of the integers, subtracting 1 from each place,
-        and saving unique permutations. 
-        TODO: avoid repeating permutations
+        creates a matrix between the ranges of each integer in the given array
         """
+        tmp_array = []
+        while len(one) > 0:
+            last = one.pop()
+            for elem in two:
+                for i in range(1, last + 1):
+                    _next = [i] + elem
+                    tmp_array.append(_next)
+                    # if the _next list is the same length
+                    # as the original list, this is a final iteration,
+                    # so append it to self.matrix
+                    if len(_next) == self.length:
+                        self.matrix.append(_next)
 
-        tuple_map = [(n, m) for n, m in zip(_list, range(len(_list)))]
-        for item in tuple_map:
-            for x in range(item[0]):
-                if item[0] == 1:
-                    return None
-                new_item = item[0] - 1
-                _new_list = self.join_lists(_list, new_item, item[1])
-                
-                if _new_list not in self.matrix:
-                    self.matrix.append(_new_list)
-                    self._iterate(_new_list)
+            self.add_lists(one, tmp_array)
+                    
         return None
 
     def solve(self):
-        """
-        call self._iterate; self._iterate calls itself until all unique 
-        elements are in self.matrix
-        """
-        self.matrix.append(self.list)
-        self._iterate(self.list)
-        return self.matrix
-
-    def join_lists(self, _list, new_item, index):
-        """
-        returns a list after partitioning _list at index
-        and appending new_item at the appropriate place,
-        depending on what self.partition_list returns
-        """
-        _l = []
-        front, middle, back = self.partition_list(_list, index)
-        if front == []:
-            _l.append(new_item)
-            for i in back:
-                _l.append(i)
-        elif back == []:
-            for i in front:
-                _l.append(i)
-            _l.append(new_item)
+        
+        if len(self.list) == 1:
+            # return a list of lists containing an integer within
+            # range of the single integer
+            return self.rangeit(self.list[0])
+        elif len(self.list) == 0:
+            return [[]]
         else:
-            for i in front:
-                _l.append(i)
-            _l.append(new_item)
-            for i in back:
-                _l.append(i)
-                
-        return _l
-    def partition_list(self, _list, index):
-        """
-        Partitions a list at the given index.
-        It returns a tuple containing the list up to the index
-        as the first element, the index as the second element,
-        and the rest of the list as the last element.
-        """
+            
+            last = self.list.pop()
+            last_as_list = self.rangeit(last)
+            self.add_lists(self.list, last_as_list)
+            return self.matrix
 
-        try:
-            if index == -1:
-                raise IndexError
-            else:
-                front = _list[:index]
-        finally:
-            pass
-        
-        try:
-            middle = _list[index]
-        finally:
-            pass
-        
-        try:
-            back = _list[index+1:]
-        except IndexError:
-            back = []
-        finally:
-            pass
-        
-        return (front, middle, back)
+
+
 
 class Candidater(object):
     """
